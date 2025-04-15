@@ -1,14 +1,14 @@
 # AI Notes App
 
-A modern notes application with AI capabilities, inspired by iOS Notes design. Create, search, and manage your notes with AI assistance.
+A modern notes application with AI capabilities. Create, search, and manage your notes with AI assistance.
 
 ## Features
 
-- Google authentication
+- Google authentication (OAuth 2.0)
 - Note creation and management
 - AI-assisted note writing using OpenAI's GPT-4o mini
 - Quick AI note generation
-- Modern, responsive UI based on iOS Notes
+- Modern, responsive UI
 
 ## Setup
 
@@ -50,6 +50,6 @@ Click the floating AI button (blue star icon) at the bottom left to quickly gene
 ## Technologies Used
 
 - React
-- Firebase Authentication
+- Google OAuth 2.0
 - OpenAI API
-- Custom CSS for styling (iOS Notes inspired)
+- Custom CSS for styling
