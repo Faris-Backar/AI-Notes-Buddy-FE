@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getNoteSuggestion, generateNoteFromTopic } from '../services/openaiService';
-import '../styles/modal.css'; // Add a new CSS file for modals
+import '../styles/modal.css'; 
 
 const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
   console.log('NewNoteModal rendered with isOpen:', isOpen, 'note:', note);
@@ -12,17 +12,14 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiError, setAiError] = useState('');
-  const [saveStatus, setSaveStatus] = useState(null); // 'success', 'error', or null
+  const [saveStatus, setSaveStatus] = useState(null);
 
-  // Reset form when modal is opened with no note (new note) or when note changes
   useEffect(() => {
     if (isOpen) {
       if (!note) {
-        // Clear form for new note
         setTitle('');
         setContent('');
       } else {
-        // Set form for editing existing note
         setTitle(note.title || '');
         setContent(note.content || '');
       }
@@ -43,8 +40,8 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
     setSaveStatus(null);
     
     const updatedNote = {
-      ...note, // Preserve existing note data if editing
-      id: note?.id || Date.now(),
+      ...note,
+      id: note?.id,
       title: title.trim(),
       content: content.trim(),
       date: new Date().toLocaleString('en-US', {
@@ -57,10 +54,8 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
       aiAssisted: isAiAssistEnabled,
     };
     
-    // Call the onSave function and handle the promise it returns
     Promise.resolve(onSave(updatedNote))
       .then(() => {
-        // Show success status briefly before closing
         setSaveStatus('success');
         setTimeout(() => {
           onClose();
@@ -69,7 +64,6 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
       .catch(error => {
         console.error('Error saving note:', error);
         setSaveStatus('error');
-        // Keep modal open when there's an error
       })
       .finally(() => {
         setIsSaving(false);
@@ -89,42 +83,33 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
       let result;
       
       if (aiPrompt.trim()) {
-        // Generate new note based on prompt
         result = await generateNoteFromTopic(aiPrompt);
         console.log('AI generated result:', result);
         
-        // If title is empty, set it from the result
         if (!title.trim() && result.title) {
           setTitle(result.title);
         }
         
-        // Process content based on its type
         if (typeof result.content === 'object') {
-          // Content is already an object
           const formattedContent = formatContentObject(result.content);
           setContent(formattedContent);
         } else if (typeof result.content === 'string') {
-          // Try to parse content as JSON if it looks like JSON
           if (result.content.trim().startsWith('{') && result.content.trim().endsWith('}')) {
             try {
               const contentObj = JSON.parse(result.content);
               const formattedContent = formatContentObject(contentObj);
               setContent(formattedContent);
             } catch (error) {
-              // If parsing fails, use the content as is
               console.error('Error parsing content as JSON:', error);
               setContent(result.content);
             }
           } else {
-            // Use the content as is
             setContent(result.content);
           }
         } else {
-          // Fallback if content is neither object nor string
           setContent(String(result.content || ''));
         }
       } else {
-        // Enhance existing content
         result = await getNoteSuggestion(content);
         setContent(result);
       }
@@ -136,28 +121,23 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
     }
   };
   
-  // Helper function to format content object into readable text
   const formatContentObject = (contentObj) => {
     if (!contentObj) return '';
     
     let formattedText = '';
     
-    // Process introduction
     if (contentObj.introduction) {
       formattedText += contentObj.introduction + '\n\n';
     }
     
-    // Process ingredients
     if (contentObj.ingredients) {
       formattedText += 'Ingredients:\n\n';
       
       if (typeof contentObj.ingredients === 'object') {
-        // Handle nested ingredients object
         Object.entries(contentObj.ingredients).forEach(([section, items]) => {
           formattedText += `For ${formatTitle(section)}:\n`;
           
           if (typeof items === 'object' && !Array.isArray(items)) {
-            // Handle further nested ingredients
             Object.entries(items).forEach(([subSection, subItems]) => {
               if (typeof subItems === 'object' && !Array.isArray(subItems)) {
                 formattedText += `${formatTitle(subSection)}:\n`;
@@ -170,7 +150,6 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
               }
             });
           } else if (Array.isArray(items)) {
-            // Handle array of ingredients
             items.forEach(item => {
               formattedText += `• ${item}\n`;
             });
@@ -185,14 +164,11 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
       }
     }
     
-    // Process instructions
     if (contentObj.instructions) {
       formattedText += 'Instructions:\n\n';
       
       if (typeof contentObj.instructions === 'object' && !Array.isArray(contentObj.instructions)) {
-        // Handle object with step_1, step_2, etc.
         const sortedSteps = Object.entries(contentObj.instructions).sort(([a], [b]) => {
-          // Extract numbers from step_1, step_2, etc. and compare
           const numA = parseInt(a.match(/\d+/)?.[0] || '0');
           const numB = parseInt(b.match(/\d+/)?.[0] || '0');
           return numA - numB;
@@ -232,7 +208,6 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
       }
     }
     
-    // Process any remaining top-level properties
     Object.entries(contentObj).forEach(([key, value]) => {
       if (!['introduction', 'ingredients', 'instructions', 'serving_suggestions', 'serving_suggestion', 'tips'].includes(key)) {
         if (typeof value === 'string') {
@@ -291,7 +266,6 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
             ></textarea>
           </div>
 
-          {/* AI Assist Toggle */}
           <div className="toggle-container">
             <label className="toggle-label">
               <div className="toggle-switch-container">
@@ -351,13 +325,6 @@ const NewNoteModal = ({ isOpen, onClose, onSave, note }) => {
                   )}
                 </button>
                 
-                {/* <button
-                  type="button"
-                  onClick={handleTestRecipe}
-                  className="test-recipe-button"
-                >
-                  Test Recipe Format
-                </button> */}
               </div>
               
               {aiError && (

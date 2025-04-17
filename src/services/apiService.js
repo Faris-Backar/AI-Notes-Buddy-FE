@@ -7,7 +7,7 @@ export const createNote = async (noteData) => {
     const token = await getIdToken();
     console.log('Creating note with data:', {
       noteData,
-      token: token.substring(0, 10) + '...' // Log partial token for security
+      token: token.substring(0, 10) + '...'
     });
     
     const response = await fetch(`${API_BASE_URL}notes/create`, {
@@ -56,7 +56,6 @@ export const getNotes = async (userUid) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
       }
     });
 
@@ -92,8 +91,10 @@ export const getNotes = async (userUid) => {
 
 export const updateNote = async (noteId, noteData) => {
   try {
+    console.log('Updating note with ID:', noteId);
+    console.log('Note data:', noteData);
     const token = await getIdToken();
-    const response = await fetch(`${API_BASE_URL}notes/${noteId}`, {
+    const response = await fetch(`${API_BASE_URL}notes/update/${noteId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

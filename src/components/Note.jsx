@@ -1,22 +1,19 @@
 import React, { useState } from 'react';
 import '../styles/home.css';
-import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronUp, Edit } from 'lucide-react';
 
-const Note = ({ title, content, date, isAI, onDelete, originalContent }) => {
+const Note = ({ title, content, date, isAI, onDelete, onEdit, originalContent }) => {
   const [showOriginal, setShowOriginal] = useState(false);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No date';
     
     try {
-      // Handle different date formats
       let dateObj;
       
       if (typeof dateString === 'string') {
-        // Try parsing as ISO string
         dateObj = new Date(dateString);
         
-        // If invalid, try parsing as timestamp
         if (isNaN(dateObj.getTime())) {
           const timestamp = parseInt(dateString);
           if (!isNaN(timestamp)) {
@@ -51,6 +48,22 @@ const Note = ({ title, content, date, isAI, onDelete, originalContent }) => {
     }
   };
 
+  // Make sure we stop event propagation for action buttons
+  const handleDelete = (e) => {
+    if (e) e.stopPropagation();
+    if (onDelete) onDelete(e);
+  };
+
+  const handleEdit = (e) => {
+    if (e) e.stopPropagation();
+    if (onEdit) onEdit(e);
+  };
+
+  const toggleOriginal = (e) => {
+    e.stopPropagation();
+    setShowOriginal(!showOriginal);
+  };
+
   return (
     <div className="note-card">
       <div className="flex justify-between items-start">
@@ -63,7 +76,7 @@ const Note = ({ title, content, date, isAI, onDelete, originalContent }) => {
             <div className="original-content-container">
               <button 
                 className="toggle-original-button"
-                onClick={() => setShowOriginal(!showOriginal)}
+                onClick={toggleOriginal}
               >
                 {showOriginal ? (
                   <>
@@ -96,7 +109,7 @@ const Note = ({ title, content, date, isAI, onDelete, originalContent }) => {
           )}
           <button 
             className="delete-button"
-            onClick={onDelete}
+            onClick={handleDelete}
             aria-label="Delete note"
           >
             <Trash2 size={16} />
@@ -107,4 +120,4 @@ const Note = ({ title, content, date, isAI, onDelete, originalContent }) => {
   );
 };
 
-export default Note; 
+export default Note;

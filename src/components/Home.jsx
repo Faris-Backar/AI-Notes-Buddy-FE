@@ -5,11 +5,10 @@ import { LogOut, Search } from 'lucide-react';
 import Note from './Note';
 import HistoryModal from './HistoryModal';
 import NewNoteModal from './NewNoteModal';
-import QuickAIModal from './QuickAIModal';
 import NoteDetailModal from './NoteDetailModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import Toast from './Toast';
-import { createNote, getNotes, deleteNote } from '../services/apiService';
+import { createNote, getNotes, deleteNote, updateNote } from '../services/apiService';
 import '../styles/home.css';
 
 const Home = () => {
@@ -60,7 +59,7 @@ const Home = () => {
     return () => {
       isMounted = false;
     };
-  }, [user]); // Only depend on user changes
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -76,10 +75,9 @@ const Home = () => {
     note.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Use useCallback to ensure the function doesn't get recreated on every render
   const handleCreateNewNote = useCallback(() => {
     console.log('Opening new note modal');
-    setSelectedNote(null); // Clear any previously selected note
+    setSelectedNote(null); 
     setIsNewNoteOpen(true);
   }, []);
 
@@ -87,12 +85,10 @@ const Home = () => {
     setIsHistoryOpen(true);
   }, []);
 
-  // Function to show toast notifications
   const showToast = (message, type = 'info') => {
     setToast({ visible: true, message, type });
   };
 
-  // Function to hide toast
   const hideToast = () => {
     setToast({ ...toast, visible: false });
   };
@@ -104,10 +100,8 @@ const Home = () => {
   }, []);
 
   const handleSaveNote = useCallback((noteData) => {
-    // Return a promise so the modal can handle the save process
     return new Promise((resolve, reject) => {
       try {
-        // Ensure title and content are properly set
         const data = {
           title: noteData.title || '',
           content: noteData.content || '',
@@ -117,35 +111,53 @@ const Home = () => {
           userUid: user.uid
         };
         
-        console.log('Saving note with data:', data);
+        console.log('Saving note with data:', data, 'Note ID:', noteData.id);
         
-        // Then send to the backend
         if (user) {
-          // Call API to save to backend
-          createNote(data)
-            .then(async (savedNote) => {
-              console.log('Note saved to backend:', savedNote);
-              // Show success toast
-              showToast(noteData.id ? 'Note updated successfully!' : 'Note saved successfully!', 'success');
-              
-              // Refresh notes list
-              try {
-                const updatedNotes = await getNotes(user.uid);
-                setNotes(updatedNotes);
-              } catch (error) {
-                console.error('Error refreshing notes:', error);
-              }
-              
-              resolve(savedNote);
-            })
-            .catch(error => {
-              console.error('Failed to save note to backend:', error);
-              // Show error toast but don't remove note from UI
-              showToast('Failed to save note to server. Please try again.', 'error');
-              reject(error);
-            });
+          if (noteData.id) {
+            console.log('Updating existing note with ID:', noteData.id);
+            updateNote(noteData.id, data)
+              .then(async (updatedNote) => {
+                console.log('Note updated in backend:', updatedNote);
+                showToast('Note updated successfully!', 'success');
+                
+                try {
+                  const updatedNotes = await getNotes(user.uid);
+                  setNotes(updatedNotes);
+                } catch (error) {
+                  console.error('Error refreshing notes:', error);
+                }
+                
+                resolve(updatedNote);
+              })
+              .catch(error => {
+                console.error('Failed to update note in backend:', error);
+                showToast('Failed to update note. Please try again.', 'error');
+                reject(error);
+              });
+          } else {
+            console.log('Creating new note');
+            createNote(data)
+              .then(async (savedNote) => {
+                console.log('Note saved to backend:', savedNote);
+                showToast('Note saved successfully!', 'success');
+                
+                try {
+                  const updatedNotes = await getNotes(user.uid);
+                  setNotes(updatedNotes);
+                } catch (error) {
+                  console.error('Error refreshing notes:', error);
+                }
+                
+                resolve(savedNote);
+              })
+              .catch(error => {
+                console.error('Failed to save note to backend:', error);
+                showToast('Failed to save note to server. Please try again.', 'error');
+                reject(error);
+              });
+          }
         } else {
-          // If no user is logged in, just resolve with the local note
           showToast('Note saved locally.', 'info');
           resolve(noteData);
         }
@@ -182,7 +194,6 @@ const Home = () => {
       setIsDeleting(true);
       await deleteNote(noteToDelete.id);
       
-      // Refresh notes list
       try {
         const updatedNotes = await getNotes(user.uid);
         setNotes(updatedNotes);
@@ -206,12 +217,10 @@ const Home = () => {
     setNoteToDelete(null);
   }, []);
 
-  // Show loading state only when actually loading
   const showLoading = isLoading && user;
 
   return (
     <div className="notes-container">
-      {/* Top Bar */}
       <div className="topbar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           {user?.photoURL && (
@@ -234,7 +243,6 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
       <div className="search-container">
         <Search size={20} strokeWidth={1.5} className="search-icon" />
         <input
@@ -246,12 +254,10 @@ const Home = () => {
         />
       </div>
 
-      {/* Note Count */}
       <div className="note-count">
         <p>{filteredNotes.length} Notes</p>
       </div>
 
-      {/* Notes List */}
       <div className="notes-list">
         {showLoading ? (
           <div className="loading-container">
@@ -282,7 +288,6 @@ const Home = () => {
         )}
       </div>
 
-      {/* Floating Action Button */}
       <button
         type="button"
         onClick={handleCreateNewNote}
@@ -294,13 +299,10 @@ const Home = () => {
         </svg>
       </button>
 
-      {/* History Modal */}
       <HistoryModal 
         isOpen={isHistoryOpen} 
         onClose={handleCloseHistory}
       />
-
-      {/* New/Edit Note Modal */}
       <NewNoteModal
         isOpen={isNewNoteOpen}
         onClose={handleCloseNewNote}
@@ -308,14 +310,12 @@ const Home = () => {
         note={selectedNote}
       />
 
-      {/* Note Detail Modal */}
       <NoteDetailModal
         isOpen={isNoteDetailOpen}
         onClose={handleCloseNoteDetail}
         note={selectedNote}
       />
 
-      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={handleCloseDeleteModal}
@@ -324,7 +324,6 @@ const Home = () => {
         isDeleting={isDeleting}
       />
 
-      {/* Toast Notification */}
       <div className="toast-container">
         <Toast
           message={toast.message}
@@ -338,4 +337,4 @@ const Home = () => {
   );
 };
 
-export default Home; 
+export default Home;
